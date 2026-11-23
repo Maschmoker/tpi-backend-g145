@@ -1,0 +1,14 @@
+# Variables de entorno locales (secretos) — nunca versionar
+.env
+.env.*
+!.env.example
+
+# Build de Maven
+target/
+
+# Logs
+*.log
+
+# IDEs
+.idea/
+.DS_Store

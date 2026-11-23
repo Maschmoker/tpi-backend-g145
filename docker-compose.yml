@@ -1,0 +1,87 @@
+# Infraestructura del proyecto Guardería de Mascotas (Etapa 1)
+# Los microservicios Spring Boot se agregan en etapas posteriores y deberán
+# declarar depends_on con condition: service_healthy sobre postgres y keycloak.
+name: guarderia
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+      # Variables consumidas por postgres/init/01-create-databases.sh
+      CLIENTES_DB: ${CLIENTES_DB}
+      CLIENTES_DB_USER: ${CLIENTES_DB_USER}
+      CLIENTES_DB_PASSWORD: ${CLIENTES_DB_PASSWORD}
+      ESTADIAS_DB: ${ESTADIAS_DB}
+      ESTADIAS_DB_USER: ${ESTADIAS_DB_USER}
+      ESTADIAS_DB_PASSWORD: ${ESTADIAS_DB_PASSWORD}
+      LOGISTICA_DB: ${LOGISTICA_DB}
+      LOGISTICA_DB_USER: ${LOGISTICA_DB_USER}
+      LOGISTICA_DB_PASSWORD: ${LOGISTICA_DB_PASSWORD}
+      KEYCLOAK_DB: ${KEYCLOAK_DB}
+      KEYCLOAK_DB_USER: ${KEYCLOAK_DB_USER}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # Se fuerza TCP (-h 127.0.0.1) para no dar la base por lista durante initdb,
+      # que solo escucha en el socket Unix.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - guarderia-net
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2
+    restart: unless-stopped
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USER}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      # Issuer público usado en los JWT; el perfil docker de los servicios
+      # resolverá el JWKS internamente vía http://keycloak:8080.
+      KC_HOSTNAME: ${KEYCLOAK_URL}
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_LOG_LEVEL: info
+      # Placeholders resueltos por realm-export.json durante el import
+      KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD}
+      KEYCLOAK_SERVICE_CLIENT_SECRET: ${KEYCLOAK_SERVICE_CLIENT_SECRET}
+    ports:
+      - "${KEYCLOAK_PORT:-8088}:8080"
+    volumes:
+      # Keycloak exige la convención <realm>-realm.json al importar un directorio
+      - ./docker/keycloak/realm-export.json:/opt/keycloak/data/import/guarderia-realm.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # /health/ready responde 200 recién cuando la BD y el import del realm están listos
+      test: ["CMD-SHELL", "{ printf 'GET /health/ready HTTP/1.0\r\n\r\n' >&0; grep 'HTTP/1.0 200'; } 0<>/dev/tcp/127.0.0.1/9000"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    networks:
+      - guarderia-net
+
+volumes:
+  postgres_data:
+
+networks:
+  guarderia-net:
+    driver: bridge

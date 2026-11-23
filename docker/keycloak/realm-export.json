@@ -1,0 +1,178 @@
+{
+  "realm": "guarderia",
+  "displayName": "Guardería de Mascotas",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "accessTokenLifespan": 1800,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "eventsEnabled": false,
+  "adminEventsEnabled": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "CLIENTE",
+        "description": "Cliente: administra sus datos, direcciones, mascotas y estadías.",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "RECEPCIONISTA",
+        "description": "Recepcionista: registra recepción y entrega y gestiona estadías.",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PERSONAL_CUIDADO",
+        "description": "Personal de cuidado: inicia y marca como realizados los servicios asignados.",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "CHOFER",
+        "description": "Chofer: consulta recorridos, inicia rutas y completa paradas.",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ADMIN",
+        "description": "Administrador: catálogo, tarifas, cobertura, capacidad y usuarios.",
+        "composite": false,
+        "clientRole": false
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "guarderia-swagger",
+      "name": "Guardería - Swagger / Postman",
+      "description": "Cliente público para probar las APIs desde Swagger UI y Postman.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8080/swagger-ui/oauth2-redirect.html",
+        "http://localhost:8081/swagger-ui/oauth2-redirect.html",
+        "http://localhost:8082/swagger-ui/oauth2-redirect.html",
+        "http://localhost:8083/swagger-ui/oauth2-redirect.html"
+      ],
+      "webOrigins": ["+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "guarderia-service",
+      "name": "Guardería - Comunicación entre microservicios",
+      "description": "Cliente confidencial para el flujo OAuth2 Client Credentials entre servicios.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "${KEYCLOAK_SERVICE_CLIENT_SECRET}",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "redirectUris": [],
+      "webOrigins": []
+    }
+  ],
+  "users": [
+    {
+      "username": "cliente1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Cliente",
+      "lastName": "Uno",
+      "email": "cliente1@guarderia.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_TEST_USER_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "requiredActions": [],
+      "realmRoles": ["CLIENTE"]
+    },
+    {
+      "username": "recepcionista1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Recepcionista",
+      "lastName": "Uno",
+      "email": "recepcionista1@guarderia.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_TEST_USER_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "requiredActions": [],
+      "realmRoles": ["RECEPCIONISTA"]
+    },
+    {
+      "username": "cuidado1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Personal",
+      "lastName": "Cuidado",
+      "email": "cuidado1@guarderia.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_TEST_USER_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "requiredActions": [],
+      "realmRoles": ["PERSONAL_CUIDADO"]
+    },
+    {
+      "username": "chofer1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Chofer",
+      "lastName": "Uno",
+      "email": "chofer1@guarderia.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_TEST_USER_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "requiredActions": [],
+      "realmRoles": ["CHOFER"]
+    },
+    {
+      "username": "admin1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Uno",
+      "email": "admin1@guarderia.test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_TEST_USER_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "requiredActions": [],
+      "realmRoles": ["ADMIN"]
+    }
+  ]
+}
