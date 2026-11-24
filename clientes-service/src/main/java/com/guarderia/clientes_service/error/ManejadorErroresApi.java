@@ -1,18 +1,57 @@
 package com.guarderia.clientes_service.error;
 
+import com.guarderia.clientes_service.exception.AccesoDenegadoRecursoException;
+import com.guarderia.clientes_service.exception.RecursoNoEncontradoException;
+import com.guarderia.clientes_service.exception.ReglaNegocioException;
+import com.guarderia.commons.error.ApiError;
+import com.guarderia.commons.error.ApiErrorFactory;
 import com.guarderia.commons.error.ManejadorErroresBase;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/**
- * Manejador de errores del servicio. Hereda de {@link ManejadorErroresBase} los
- * handlers tÃ©cnicos (400/405/415) y el contrato {@code ApiError} con correlationId.
- *
- * <p>En este bloque queda intencionalmente sin handlers propios. El handler genÃ©rico
- * de 500 y los errores de dominio (404/409/403) se agregan cuando existan las capas
- * de aplicaciÃ³n correspondientes: un {@code @ExceptionHandler(Exception.class)}
- * prematuro convertirÃ­a en 500 los 404 de ruta inexistente
- * ({@code NoResourceFoundException}) y los {@code ResponseStatusException} de Spring.</p>
- */
 @RestControllerAdvice
 public class ManejadorErroresApi extends ManejadorErroresBase {
+
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    public ResponseEntity<ApiError> manejarNoEncontrado(RecursoNoEncontradoException ex,
+                                                       HttpServletRequest request) {
+        return respuesta(org.springframework.http.HttpStatus.NOT_FOUND,
+                RecursoNoEncontradoException.CODIGO, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(AccesoDenegadoRecursoException.class)
+    public ResponseEntity<ApiError> manejarAccesoDenegado(AccesoDenegadoRecursoException ex,
+                                                          HttpServletRequest request) {
+        return respuesta(org.springframework.http.HttpStatus.FORBIDDEN,
+                AccesoDenegadoRecursoException.CODIGO, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(org.springframework.security.authorization.AuthorizationDeniedException.class)
+    public ResponseEntity<ApiError> manejarAutorizacionDenegada(
+            org.springframework.security.authorization.AuthorizationDeniedException ex,
+            HttpServletRequest request) {
+        return respuesta(org.springframework.http.HttpStatus.FORBIDDEN,
+                AccesoDenegadoRecursoException.CODIGO, "No tiene permisos para realizar esta operación", request);
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiError> manejarAccessDenied(org.springframework.security.access.AccessDeniedException ex,
+                                                       HttpServletRequest request) {
+        return respuesta(org.springframework.http.HttpStatus.FORBIDDEN,
+                AccesoDenegadoRecursoException.CODIGO, "No tiene permisos para realizar esta operación", request);
+    }
+
+    @ExceptionHandler(ReglaNegocioException.class)
+    public ResponseEntity<ApiError> manejarReglaNegocio(ReglaNegocioException ex,
+                                                        HttpServletRequest request) {
+        return respuesta(ex.getEstado(), ex.getCodigo(), ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> manejarGenerico(Exception ex, HttpServletRequest request) {
+        return respuesta(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+                ApiErrorFactory.CODIGO_ERROR_INTERNO, "Ocurrió un error inesperado", request);
+    }
 }
