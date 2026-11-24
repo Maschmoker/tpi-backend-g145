@@ -36,9 +36,60 @@ La solución está organizada alrededor de un API Gateway, tres microservicios f
 - El Gateway no debe acceder directamente a las bases de datos.
 - `guarderia-commons` no es un microservicio y no debe contener reglas de negocio, entidades JPA ni repositorios pertenecientes a un dominio.
 
+### Puertos, contenedores y bases de datos
+
+Se establece la siguiente configuración para todos los servicios. Los nombres indicados en la columna de contenedor corresponden a los nombres de servicio de Docker Compose y se utilizarán como hostname para la comunicación dentro de la red interna.
+
+| Servicio | Nombre en Docker Compose / Hostname | Puerto interno | Puerto publicado en el host | Base de datos |
+|---|---|---|---|---|
+| gateway-service | gateway-service | 8080 | 8080 | No utiliza |
+| clientes-service | clientes-service | 8081 | 8081 | clientes_db |
+| estadias-service | estadias-service | 8082 | 8082 | estadias_db |
+| logistica-service | logistica-service | 8083 | 8083 | logistica_db |
+| keycloak | keycloak | 8080 | 8088 | keycloak_db |
+| postgres | postgres | 5432 | 5432 | clientes_db, estadias_db, logistica_db, keycloak_db |
+
+PostgreSQL se ejecutará en un único contenedor, pero cada microservicio tendrá su propia base de datos lógica e independiente. Keycloak utilizará una base de datos separada.
+
+Los microservicios Spring Boot deberán configurar explícitamente su puerto interno mediante `server.port`, respetando los valores de la tabla.
+
+Keycloak conservará su puerto interno predeterminado 8080, publicado en el host como 8088.
+
+### Reglas de comunicación en Docker
+
+- Los servicios deberán comunicarse utilizando los hostnames de Docker Compose y los puertos internos.
+- No se utilizará `localhost` para las comunicaciones entre contenedores.
+- El Gateway accederá a los microservicios mediante:
+  - `http://clientes-service:8081`
+  - `http://estadias-service:8082`
+  - `http://logistica-service:8083`
+- Los microservicios accederán a PostgreSQL mediante `postgres:5432`, indicando su respectiva base de datos.
+- Las conexiones a Keycloak desde los contenedores utilizarán su hostname interno, respetando la configuración del emisor (`issuer`) del JWT.
+- Las credenciales y secretos se configurarán mediante variables de entorno, sin incluirlos directamente en el código fuente.
+
+### Configuración por entorno
+
+La configuración de los microservicios deberá permitir su ejecución tanto localmente desde VS Code como dentro de contenedores Docker, sin modificar el código fuente.
+
+Se utilizarán perfiles de Spring:
+- `local`: para ejecutar los servicios directamente desde el entorno de desarrollo.
+- `docker`: para ejecutar los servicios dentro de Docker Compose.
+
+Las configuraciones deberán utilizar variables de entorno con valores predeterminados cuando corresponda. Por ejemplo:
+
+- `DB_HOST`: hostname de PostgreSQL (`localhost` en local y `postgres` en Docker).
+- `DB_PORT`: puerto de PostgreSQL (`5432`).
+- `KEYCLOAK_URL`: dirección de Keycloak (`http://localhost:8088` en local y `http://keycloak:8080` dentro de Docker).
+
+Se utilizará `application.yml` como configuración común y archivos `application-local.yml` y `application-docker.yml` para las particularidades de cada entorno.
+El perfil activo podrá seleccionarse mediante la variable `SPRING_PROFILES_ACTIVE`. Las credenciales, claves y secretos deberán proporcionarse mediante variables de entorno, nunca quedar escritos directamente en los archivos de configuración.
+
+•Para evitar errores de validación de firma (Invalid issuer) cuando los tokens se soliciten desde fuera de Docker (Postman/Swagger), spring.security.oauth2.resourceserver.jwt.issuer-uri deberá mantener siempre la URL pública (http://localhost:8088/realms/<realm>), mientras que en el perfil docker se configurará explícitamente spring.security.oauth2.resourceserver.jwt.jwk-set-uri apuntando a la red interna (http://keycloak:8080/realms/<realm>/protocol/openid-connect/certs).
+
+
 ## 4. Tecnologías y dependencias previstas
 
-La línea tecnológica definida para el proyecto es Java 21, Spring Boot 3.x, Maven, Spring Data JPA, Spring Security OAuth2 Resource Server, PostgreSQL, Flyway, Keycloak, Docker Compose, Spring Cloud Gateway y Log4j2 para logging.
+La línea tecnológica definida para el proyecto es Java 21, Spring Boot 4.x, Maven, Spring Data JPA, Spring Security OAuth2 Resource Server, PostgreSQL, Flyway, Keycloak, Docker Compose, Spring Cloud Gateway y Log4j2 para logging.
 
 ### Dependencias por proyecto
 
@@ -101,6 +152,7 @@ Todos los módulos ejecutables Spring Boot (`clientes-service`, `estadias-servic
 - No registrar contraseñas, tokens JWT, API keys, datos sensibles ni información personal innecesaria.
 - Incluir `correlation-id` en los mensajes cuando esté disponible para relacionar solicitudes entre Gateway y microservicios.
 - La librería `guarderia-commons` no debe forzar una implementación concreta de logging. Si necesita emitir logs, debe depender de la API SLF4J y dejar que cada aplicación provea Log4j2.
+
 
 ## 5. Bases de datos y propiedad de los datos
 
@@ -165,14 +217,13 @@ Aplicar autorización por rol y, para el rol `CLIENTE`, control de propiedad: un
 6. La cobertura se valida usando distancia real por calles/ruta, no distancia en línea recta.
 7. El costo de transporte se calcula a partir de la distancia de ida y vuelta por la tarifa por kilómetro, respetando el mínimo configurado.
 8. La capacidad diaria de traslados es configurable; si se supera, se rechaza la operación.
-9. Traslados a la misma dirección o a direcciones dentro de un umbral configurable (referencia inicial: 30–50 m) pueden agruparse en una misma parada.
-10. Solo se permiten las transiciones de estado definidas. Una transición inválida debe rechazarse, normalmente con HTTP 409.
+9. Solo se permiten las transiciones de estado definidas. Una transición inválida debe rechazarse, normalmente con HTTP 409.
+10. Cuando todos los servicios de cuidado estén `REALIZADO`, la estadía pasa automáticamente a `LISTA_PARA_RETIRO`.
 11. Una estadía solo puede cancelarse antes de la recepción; los traslados asociados deben cancelarse como compensación.
-12. Cuando todos los servicios de cuidado estén `REALIZADO`, la estadía pasa automáticamente a `LISTA_PARA_RETIRO`.
-13. Un cliente solo puede operar sobre sus propios recursos.
-14. Toda estadía debe incluir al menos un servicio.
-15. La fecha de egreso planificada no puede ser anterior a la fecha de ingreso.
-16. El orden configurable de servicios de cuidado es una extensión opcional, fuera del MVP.
+12. Un cliente solo puede operar sobre sus propios recursos.
+13. Toda estadía debe incluir al menos un servicio.
+14. La fecha de egreso planificada no puede ser anterior a la fecha de ingreso.
+15. El orden configurable de servicios de cuidado es una extensión opcional, fuera del MVP.
 
 ## 8. Estados del dominio
 
@@ -218,7 +269,6 @@ No afirmar que una ruta es óptima globalmente: el enfoque descrito es heurísti
 ## 10. API y comunicación
 
 Los prefijos públicos previstos en el Gateway son:
-
 - `/api/clientes/**`
 - `/api/estadias/**`
 - `/api/logistica/**`
@@ -233,6 +283,47 @@ Operaciones de logística explícitamente contempladas en el diseño incluyen:
 - `PUT /configuracion`
 
 Las rutas internas pueden diferir de los prefijos públicos del Gateway. Mantener claramente diferenciadas las URLs externas y las internas entre servicios.
+
+### Protocolo de comunicación entre microservicios
+
+La comunicación entre los microservicios se realizará mediante APIs REST sobre HTTP, utilizando llamadas síncronas implementadas con `RestClient` de Spring.
+
+Esta decisión busca mantener una arquitectura sencilla y facilitar la implementación del MVP, evitando incorporar inicialmente un sistema de mensajería o comunicación asíncrona.
+
+#### Comunicación y responsabilidades
+
+Se establecen las siguientes interacciones:
+
+| Servicio emisor | Servicio receptor | Finalidad |
+|---|---|---|
+| estadias-service | clientes-service | Consultar y validar la existencia del cliente y sus mascotas antes de registrar una solicitud de estadía. |
+| estadias-service | logistica-service | Solicitar la creación de traslados asociados a una estadía y solicitar su cancelación cuando corresponda. |
+| logistica-service | Google Maps Platform | Consultar distancias y tiempos estimados para la planificación de traslados. |
+
+Cada microservicio expondrá endpoints REST específicos para las operaciones que necesiten los demás servicios.
+Las URLs de los servicios se configurarán mediante variables de entorno, utilizando los hostnames y puertos internos definidos en la Sección 3.
+
+#### Propagación de identidad y seguridad
+Todas las comunicaciones internas que se realicen en nombre de un usuario autenticado deberán propagar el token JWT original mediante el encabezado:
+
+`Authorization: Bearer <token>`
+
+El servicio receptor validará el JWT utilizando Spring Security OAuth2 Resource Server y Keycloak, verificando su autenticidad y los permisos necesarios para ejecutar la operación solicitada.
+De esta manera, se conserva el contexto de identidad del usuario que inició la operación y cada microservicio mantiene la responsabilidad de autorizar el acceso a sus propios recursos.
+
+Para operaciones internas que no estén asociadas a una solicitud de un usuario autenticado, como tareas programadas o procesos automáticos, se utilizará autenticación de servicio a servicio mediante el flujo OAuth2 Client Credentials, con permisos específicos para cada servicio.
+Los tokens, credenciales y secretos no deberán almacenarse en el código fuente ni registrarse en los logs.
+
+#### Manejo de errores y trazabilidad
+
+Las llamadas internas deberán contemplar:
+- Configuración de tiempos máximos de espera (timeouts).
+- Manejo de errores HTTP y respuestas inesperadas.
+- Propagación del identificador de correlación (`X-Correlation-ID`) para facilitar el seguimiento de una operación entre servicios.
+- Reintentos únicamente cuando sean apropiados y no provoquen operaciones duplicadas.
+
+Cuando una operación involucre a más de un microservicio, deberán contemplarse posibles fallas parciales. Por ejemplo, si se cancela una estadía y también debe cancelarse su traslado, el sistema deberá manejar el resultado de ambas operaciones sin asumir que existe una transacción distribuida entre sus bases de datos.
+
 
 ## 11. Librería compartida `guarderia-commons`
 
@@ -294,6 +385,7 @@ No implementar funcionalidades fuera del alcance sin que el usuario lo solicite 
 - Antes de modificar un endpoint, entidad o migración, inspeccionar su implementación y usos existentes.
 - No sobrescribir migraciones Flyway ya aplicadas; crear una migración nueva.
 - No declarar una tarea terminada sin ejecutar o indicar las pruebas/build que se pudieron verificar.
+
 
 ## 14. Cómo debe trabajar una IA en este repositorio
 
