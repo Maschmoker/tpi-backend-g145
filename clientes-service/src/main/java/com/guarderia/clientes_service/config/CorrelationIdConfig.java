@@ -8,7 +8,7 @@ import org.springframework.core.Ordered;
 
 /**
  * Registra el filtro de {@code X-Correlation-ID} antes de la cadena de Spring Security,
- * de modo que el MDC ya esté poblado cuando el filtro de seguridad registre errores.
+ * de modo que el MDC ya estÃ© poblado cuando el filtro de seguridad registre errores.
  */
 @Configuration
 public class CorrelationIdConfig {

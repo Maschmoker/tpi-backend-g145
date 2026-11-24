@@ -20,7 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    /** Único acceso anónimo: health check y documentación OpenAPI. */
+    /** Ãšnico acceso anÃ³nimo: health check y documentaciÃ³n OpenAPI. */
     private static final String[] RUTAS_PUBLICAS = {
             "/actuator/health",
             "/actuator/health/**",
@@ -34,7 +34,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
         http
-                // API sin cookies de sesión ni formularios: CSRF no aplica.
+                // API sin cookies de sesiÃ³n ni formularios: CSRF no aplica.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sesion -> sesion.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(autorizacion -> autorizacion
