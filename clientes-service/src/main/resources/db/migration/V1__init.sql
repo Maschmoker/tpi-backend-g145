@@ -1,0 +1,4 @@
+-- Migración inicial de clientes_db (Bloque 3A).
+-- Sin sentencias a propósito: el objetivo es comprobar que Flyway conecta,
+-- crea flyway_schema_history y registra la versión 1.
+-- El esquema de dominio (cliente, direccion, mascota) se incorpora en el Bloque 3B.
