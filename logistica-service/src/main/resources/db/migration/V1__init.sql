@@ -1,0 +1,4 @@
+-- Migración inicial de logistica_db (Bloque 5A).
+-- Sin sentencias a propósito: el objetivo es comprobar que Flyway conecta,
+-- crea flyway_schema_history y registra la versión 1.
+-- El esquema de dominio se incorpora en el Bloque 5B.

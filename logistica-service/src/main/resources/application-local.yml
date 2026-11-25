@@ -1,0 +1,12 @@
+# Perfil local: servicio ejecutado desde el IDE contra Postgres/Keycloak en Docker.
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8088/realms/guarderia/protocol/openid-connect/certs
+
+management:
+  endpoint:
+    health:
+      show-details: always
