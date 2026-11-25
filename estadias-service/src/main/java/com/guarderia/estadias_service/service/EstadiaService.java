@@ -202,12 +202,12 @@ public class EstadiaService {
         // IntegraciÃ³n con logÃ­stica: crear traslados
         if (input.requiereRetiro()) {
             logisticaHttpClient.crearTraslado(token, new LogisticaDtos.CrearTrasladoRequest(
-                    guardada.getId(), "RETIRO", input.direccionTrasladoId(),
+                    guardada.getId(), cliente.id(), "RETIRO", input.direccionTrasladoId(),
                     direccion.latitud(), direccion.longitud(), input.fechaIngreso()));
         }
         if (input.requiereDevolucion()) {
             LogisticaDtos.TrasladoResponse trasladoDev = logisticaHttpClient.crearTraslado(token, new LogisticaDtos.CrearTrasladoRequest(
-                    guardada.getId(), "DEVOLUCION", input.direccionTrasladoId(),
+                    guardada.getId(), cliente.id(), "DEVOLUCION", input.direccionTrasladoId(),
                     direccion.latitud(), direccion.longitud(), input.fechaEgreso()));
             // se mantiene pendiente; se habilita al pasar a LISTA_PARA_RETIRO
             guardada.setObservaciones((guardada.getObservaciones() == null ? "" : guardada.getObservaciones())

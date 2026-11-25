@@ -15,7 +15,7 @@ public final class LogisticaDtos {
                                             boolean estimado) {
     }
 
-    public record CrearTrasladoRequest(Long estadiaId, String tipo, Long direccionId, Double latitud, Double longitud,
+    public record CrearTrasladoRequest(Long estadiaId, Long clienteId, String tipo, Long direccionId, Double latitud, Double longitud,
                                        LocalDate fechaProgramada) {
     }
 
