@@ -2,6 +2,7 @@ package com.guarderia.estadias_service.error;
 
 import com.guarderia.estadias_service.exception.AccesoDenegadoRecursoException;
 import com.guarderia.estadias_service.exception.RecursoNoEncontradoException;
+import com.guarderia.estadias_service.exception.IntegracionServicioException;
 import com.guarderia.estadias_service.exception.ReglaNegocioException;
 import com.guarderia.commons.error.ApiError;
 import com.guarderia.commons.error.ApiErrorFactory;
@@ -47,6 +48,13 @@ public class ManejadorErroresApi extends ManejadorErroresBase {
     public ResponseEntity<ApiError> manejarReglaNegocio(ReglaNegocioException ex,
                                                         HttpServletRequest request) {
         return respuesta(ex.getEstado(), ex.getCodigo(), ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(IntegracionServicioException.class)
+    public ResponseEntity<ApiError> manejarIntegracion(IntegracionServicioException ex,
+                                                       HttpServletRequest request) {
+        return respuesta(org.springframework.http.HttpStatus.BAD_GATEWAY,
+                "INTEGRACION_SERVICIO", ex.getMessage(), request);
     }
 
     @ExceptionHandler(Exception.class)
