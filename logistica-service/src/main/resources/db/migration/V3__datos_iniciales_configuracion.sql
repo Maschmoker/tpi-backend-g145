@@ -12,9 +12,9 @@ INSERT INTO configuracion (
     radio_agrupacion_km,
     velocidad_promedio_kmh
 ) VALUES (
-    -31.4201,
-    -64.1888,
-    'Córdoba Capital, Córdoba, Argentina',
+    -31.4257,
+    -64.1818,
+    'Obispo Salguero 500, Córdoba Capital, Córdoba, Argentina',
     25.0,
     800.00,
     2500.00,
