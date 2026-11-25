@@ -18,11 +18,40 @@ spring:
               uri: ${LOGISTICA_SERVICE_URL:http://localhost:8083}
               predicates:
                 - Path=/api/logistica/**
+            - id: clientes-service-api-docs
+              uri: ${CLIENTES_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/v3/api-docs/clientes
+              filters:
+                - RewritePath=/v3/api-docs/clientes, /v3/api-docs
+            - id: estadias-service-api-docs
+              uri: ${ESTADIAS_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/v3/api-docs/estadias
+              filters:
+                - RewritePath=/v3/api-docs/estadias, /v3/api-docs
+            - id: logistica-service-api-docs
+              uri: ${LOGISTICA_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/v3/api-docs/logistica
+              filters:
+                - RewritePath=/v3/api-docs/logistica, /v3/api-docs
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8088/realms/guarderia
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: clientes-service
+        url: /v3/api-docs/clientes
+      - name: estadias-service
+        url: /v3/api-docs/estadias
+      - name: logistica-service
+        url: /v3/api-docs/logistica
 
 server:
   port: 8080

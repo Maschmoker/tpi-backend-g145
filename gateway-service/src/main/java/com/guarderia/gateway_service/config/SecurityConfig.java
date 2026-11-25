@@ -48,6 +48,8 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/actuator/health/**").permitAll()
+                        .pathMatchers("/swagger-ui.html", "/swagger-ui/**",
+                                "/v3/api-docs/**", "/webjars/**").permitAll()
                         .pathMatchers("/api/**").authenticated()
                         .anyExchange().authenticated()
                 )
