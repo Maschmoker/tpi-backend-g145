@@ -1,0 +1,25 @@
+# Build outputs
+target/
+*/target/
+
+# VCS
+.git/
+.gitignore
+.gitattributes
+
+# Local env / secrets
+.env
+.env.*
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Docker
+docker-compose.override.yml

@@ -7,6 +7,8 @@ import com.guarderia.estadias_service.exception.AccesoDenegadoRecursoException;
 import com.guarderia.estadias_service.exception.IntegracionServicioException;
 import com.guarderia.estadias_service.exception.RecursoNoEncontradoException;
 import com.guarderia.estadias_service.exception.ReglaNegocioException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -16,6 +18,8 @@ import java.math.BigDecimal;
 
 @Component
 public class LogisticaHttpClient {
+
+    private static final Logger log = LoggerFactory.getLogger(LogisticaHttpClient.class);
 
     private final RestClient restClient;
 
@@ -62,17 +66,19 @@ public class LogisticaHttpClient {
 
     private void ejecutarPatch(String path, String token, Object body) {
         try {
-            restClient.patch()
+            RestClient.RequestBodySpec spec = restClient.patch()
                     .uri(path)
                     .header("Authorization", "Bearer " + token)
-                    .header(CorrelationId.HEADER, correlationId())
-                    .body(body)
-                    .retrieve()
-                    .toBodilessEntity();
+                    .header(CorrelationId.HEADER, correlationId());
+            if (body != null) {
+                spec.body(body);
+            }
+            spec.retrieve().toBodilessEntity();
         } catch (RestClientResponseException ex) {
             mapearErrorHttp(ex);
             throw new IntegracionServicioException("Error inesperado al consultar logistica-service", ex);
         } catch (Exception ex) {
+            log.warn("No se pudo conectar con logistica-service en {}: {}", path, ex.getMessage());
             throw new IntegracionServicioException("No se pudo conectar con logistica-service", ex);
         }
     }

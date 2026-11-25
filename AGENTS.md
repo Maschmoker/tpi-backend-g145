@@ -409,3 +409,16 @@ No implementar funcionalidades fuera del alcance sin que el usuario lo solicite 
 - Detalles de manejo de fallas y compensaciones entre `estadias-service` y `logistica-service`.
 
 Cuando exista una diferencia entre este contexto y el código real, inspeccionar el código y consultar al usuario antes de realizar cambios que alteren decisiones de arquitectura o reglas de negocio.
+
+## 16. Etapa 7 — Infraestructura Docker (resuelto parcialmente)
+
+Resuelto en esta etapa: Dockerfile multi-stage para los 4 servicios Spring Boot, `docker-compose.yml` con los 6 contenedores, healthchecks HTTP en `/actuator/health`, red interna compartida, puertos según Sección 3, y script de smoke test end-to-end.
+
+El smoke test (`scripts/smoke-test.ps1`) se ejecutó completo y de forma repetible contra los contenedores: obtiene tokens reales de Keycloak para `cliente1`, `recepcionista1`, `cuidado1`, `chofer1` y `admin1`, propaga `X-Correlation-ID`, recorre cotización, creación de estadía con retiro y devolución, ruta de retiro, recepción, cuidado, ruta de devolución y entrega, verificando los estados `EN_TRANSITO_IDA`, `RECIBIDA`, `EN_CUIDADO`, `LISTA_PARA_RETIRO`, `EN_TRANSITO_VUELTA` y `ENTREGADA`.
+
+Ajustes de integración detectados por el smoke test:
+- `logistica-service` y `estadias-service` usan `JdkClientHttpRequestFactory` para sus llamadas internas, porque `SimpleClientHttpRequestFactory` no soporta `PATCH`.
+- Los repositorios de `estadias-service` inicializan con `@EntityGraph` las colecciones y asociaciones perezosas que los controladores mapean a DTO fuera de la transacción (`open-in-view: false`).
+- `PATCH /api/logistica/traslados/por-estadia/{estadiaId}/habilitar` acepta también los roles `PERSONAL_CUIDADO` y `CHOFER`, ya que `estadias-service` lo invoca propagando el token del usuario que completa los servicios o inicia la ruta de devolución.
+
+Permanecen pendientes (Sección 15): nombres definitivos de claves/atributos no especificados, contratos completos y rutas exactas de todos los endpoints, estructura física final y estrategia de publicación de `guarderia-commons` en CI/CD, modelo relacional exacto de `ParadaRuta`/`Traslado`, y detalles de compensaciones entre `estadias-service` y `logistica-service`.

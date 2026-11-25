@@ -56,8 +56,10 @@ public class TrasladoController {
         return ResponseEntity.noContent().build();
     }
 
+    // Invocado internamente por estadias-service al pasar a LISTA_PARA_RETIRO
+    // (token de PERSONAL_CUIDADO) y al iniciar la ruta de devolucion (token de CHOFER).
     @PatchMapping("/traslados/por-estadia/{estadiaId}/habilitar")
-    @PreAuthorize("hasAnyRole('CLIENTE','RECEPCIONISTA','ADMIN')")
+    @PreAuthorize("hasAnyRole('CLIENTE','RECEPCIONISTA','ADMIN','PERSONAL_CUIDADO','CHOFER')")
     @Operation(summary = "Habilitar traslados por estadía")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> habilitarPorEstadia(@PathVariable Long estadiaId) {

@@ -12,3 +12,6 @@ target/
 # IDEs
 .idea/
 .DS_Store
+
+# Clases compiladas sueltas
+*.class

@@ -8,12 +8,16 @@ import com.guarderia.commons.error.ApiError;
 import com.guarderia.commons.error.ApiErrorFactory;
 import com.guarderia.commons.error.ManejadorErroresBase;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ManejadorErroresApi extends ManejadorErroresBase {
+
+    private static final Logger log = LoggerFactory.getLogger(ManejadorErroresApi.class);
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ApiError> manejarNoEncontrado(RecursoNoEncontradoException ex,
@@ -59,6 +63,7 @@ public class ManejadorErroresApi extends ManejadorErroresBase {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> manejarGenerico(Exception ex, HttpServletRequest request) {
+        log.error("Error no controlado en {}", request.getRequestURI(), ex);
         return respuesta(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
                 ApiErrorFactory.CODIGO_ERROR_INTERNO, "Ocurrió un error inesperado", request);
     }
