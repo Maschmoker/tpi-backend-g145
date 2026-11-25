@@ -1,0 +1,17 @@
+# Perfil local: servicio ejecutado desde el IDE contra Postgres/Keycloak en Docker.
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Fijar el JWKS por localhost evita que Spring Boot haga el discovery OIDC
+          # al arrancar (con solo issuer-uri, el arranque requiere Keycloak levantado).
+          # El issuer público se mantiene en application.yml para validar el claim iss.
+          # Valor literal a propósito: .env define KEYCLOAK_JWK_SET_URI con el hostname
+          # interno (keycloak:8080), que no resuelve desde el host.
+          jwk-set-uri: http://localhost:8088/realms/guarderia/protocol/openid-connect/certs
+
+management:
+  endpoint:
+    health:
+      show-details: always

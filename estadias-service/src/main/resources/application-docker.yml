@@ -1,0 +1,25 @@
+# Perfil docker: servicio dentro de la red guarderia-net.
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${ESTADIAS_DB:estadias_db}
+    username: ${ESTADIAS_DB_USER:estadias_user}
+    password: ${ESTADIAS_DB_PASSWORD}
+
+  flyway:
+    # Tolera que Postgres tarde unos segundos más que el contenedor del servicio.
+    connect-retries: 10
+    connect-retries-interval: 5
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # issuer público para validar iss; JWKS por hostname interno (Sección 3).
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8088/realms/guarderia}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://keycloak:8080/realms/guarderia/protocol/openid-connect/certs}
+
+servicios:
+  clientes:
+    url: ${CLIENTES_SERVICE_URL:http://clientes-service:8081}
+  logistica:
+    url: ${LOGISTICA_SERVICE_URL:http://logistica-service:8083}
