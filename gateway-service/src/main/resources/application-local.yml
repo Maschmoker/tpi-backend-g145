@@ -1,0 +1,9 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8088/realms/guarderia/protocol/openid-connect/certs

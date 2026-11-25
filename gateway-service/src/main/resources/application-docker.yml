@@ -1,0 +1,26 @@
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: clientes-service
+              uri: ${CLIENTES_SERVICE_URL:http://clientes-service:8081}
+              predicates:
+                - Path=/api/clientes/**
+            - id: estadias-service
+              uri: ${ESTADIAS_SERVICE_URL:http://estadias-service:8082}
+              predicates:
+                - Path=/api/estadias/**
+            - id: logistica-service
+              uri: ${LOGISTICA_SERVICE_URL:http://logistica-service:8083}
+              predicates:
+                - Path=/api/logistica/**
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/guarderia/protocol/openid-connect/certs
